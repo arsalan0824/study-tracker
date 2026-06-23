@@ -7,108 +7,146 @@
     <style>
         :root {
             --sky-blue: #87CEEB;
-            --gray-undone: #e0e0e0;
-            --dark-text: #333;
+            --gray-undone: rgba(255, 255, 255, 0.4);
+            --dark-text: #222;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: transparent;
-            color: var(--dark-text);
             margin: 0;
-            padding: 8px;
+            padding: 12px;
             box-sizing: border-box;
-            overflow: hidden; /* Stops any vertical scrolling */
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background-color: #222;
         }
 
+        /* Fullscreen rotating background layer */
+        #bg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0.35; /* Keeps the background low-opacity and non-distracting */
+            z-index: 1;
+            transition: background-image 0.5s ease-in-out;
+        }
+
+        /* Main layout framework stretching perfectly to fit the widget boundaries */
         .container {
             width: 100%;
+            height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            justify-content: space-between; /* Dynamically spreads elements to eliminate dead space */
+            position: relative;
+            z-index: 2;
         }
 
-        /* Merges Date, Streak, and Week Bar into a tight single layout row */
+        /* Top navigation header */
         .top-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 4px;
-            border-bottom: 1px solid #f0f0f0;
-            padding-bottom: 4px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .meta-info {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
         h1 {
             margin: 0;
-            font-size: 0.9rem;
-            font-weight: 700;
-            white-space: nowrap;
+            font-size: 1rem;
+            font-weight: 800;
+            color: #000;
+            text-shadow: 0 1px 2px rgba(255,255,255,0.5);
         }
 
         .streak-display {
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             font-weight: bold;
-            white-space: nowrap;
+            color: #000;
+            text-shadow: 0 1px 2px rgba(255,255,255,0.5);
         }
 
-        /* Ultra-compact horizontal grid layout for the week tracking days */
+        /* Horizontal progress layout row */
         .week-bar {
             display: flex;
-            gap: 2px;
+            gap: 3px;
         }
 
         .day-box {
-            background-color: var(--gray-undone);
-            color: #666;
-            padding: 2px 4px;
-            border-radius: 3px;
+            background-color: rgba(0, 0, 0, 0.1);
+            color: #222;
+            padding: 3px 5px;
+            border-radius: 4px;
             font-size: 0.65rem;
-            font-weight: 600;
+            font-weight: 700;
             text-align: center;
             min-width: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .day-box.completed {
             background-color: var(--sky-blue);
             color: white;
+            border-color: var(--sky-blue);
+            text-shadow: 0 1px 1px rgba(0,0,0,0.2);
         }
 
-        /* Compact interactive list block */
+        /* Main interactive checklist section */
         .checklist {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 6px;
+            flex-grow: 1;
+            justify-content: center; /* Vertically centers the list within the middle zone */
+            margin: 4px 0;
         }
 
         .task-item {
             display: flex;
             align-items: center;
-            padding: 6px 8px;
-            background-color: #f7f7f7;
-            border-radius: 5px;
-            border-left: 3px solid var(--gray-undone);
+            padding: 8px 12px; /* Expanded slightly to occupy vertical space elegantly */
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border-radius: 8px;
+            border-left: 4px solid rgba(0, 0, 0, 0.15);
+            border-top: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
         }
 
         .task-item.checked {
             border-left-color: var(--sky-blue);
-            background-color: #f0f8ff;
+            background: rgba(240, 248, 255, 0.85);
         }
 
         .task-item input {
-            margin: 0 8px 0 0;
-            transform: scale(1.05);
+            margin: 0 10px 0 0;
+            transform: scale(1.1);
             cursor: pointer;
         }
 
         .task-item a {
-            font-size: 0.8rem;
+            font-size: 0.85rem;
+            font-weight: 600;
             color: var(--dark-text);
             text-decoration: none;
             width: 100%;
@@ -117,9 +155,20 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        /* Subtle bottom accessory bar to firmly eliminate any appearance of dead space */
+        .footer-bar {
+            height: 3px;
+            width: 40px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 10px;
+            margin: 0 auto 2px auto;
+        }
     </style>
 </head>
 <body>
+
+<div id="bg-layer"></div>
 
 <div class="container">
     <div class="top-row">
@@ -155,9 +204,24 @@
             <a href="https://docs.google.com/spreadsheets/d/1IwmM6uSK15S0HBSmyIMgL8GT3XeUnkH1Aay9CYelRps/edit?usp=sharing" target="_blank">Memorize 10 vocab words</a>
         </div>
     </div>
+
+    <div class="footer-bar"></div>
 </div>
 
 <script>
+    // Rotates randomly between your uploaded landscape pictures on each load
+    const images = [
+        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80", // Coastline / Beach
+        "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80", // Sunset Pier
+        "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1200&q=80", // Mountain Fog / City Overlook
+        "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=1200&q=80"  // Deep Evening Skyscape
+    ];
+
+    function setRandomBackground() {
+        const randomIndex = Math.floor(Math.random() * images.length);
+        document.getElementById('bg-layer').style.backgroundImage = `url('${images[randomIndex]}')`;
+    }
+
     let state = {
         lastActiveDate: "", 
         streak: 0,
@@ -259,6 +323,7 @@
         });
     }
 
+    setRandomBackground();
     loadState();
     render();
 </script>
