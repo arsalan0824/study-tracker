@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Study Tracker</title>
+    <style>
+        :root {
+            --sky-blue: #87CEEB;
+            --gray-undone: #d3d3d3;
+            --dark-text: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: var(--dark-text);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+            font-size: 1.8rem;
+        }
+
+        .date-display {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        .streak-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .checklist {
+            text-align: left;
+            margin-bottom: 30px;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background-color: #f9f9f9;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid var(--gray-undone);
+            transition: all 0.3s ease;
+        }
+
+        .task-item.checked {
+            border-left-color: var(--sky-blue);
+            background-color: #f0f8ff;
+        }
+
+        .task-item input {
+            margin-right: 15px;
+            transform: scale(1.3);
+            cursor: pointer;
+        }
+
+        .task-item a {
+            font-size: 1.05rem;
+            color: var(--dark-text);
+            text-decoration: none;
+            width: 100%;
+            display: block;
+        }
+
+        .task-item a:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+
+        .week-bar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .day-box {
+            background-color: var(--gray-undone);
+            color: #555;
+            padding: 10px 2px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .day-box.completed {
+            background-color: var(--sky-blue);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 id="date-title">Today's Tracker</h1>
+    <div class="date-display" id="current-date">Loading date...</div>
+    
+    <div class="streak-display" id="streak-container">
+        Streak: <span id="streak-count">0</span>
+    </div>
+
+    <div class="checklist">
+        <div class="task-item">
+            <input type="checkbox" id="task0" onclick="toggleTask(0)">
+            <a href="https://qotd.collegeboard.org/" target="_blank">SAT Question of the Day</a>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" id="task1" onclick="toggleTask(1)">
+            <a href="https://dl.bookfunnel.com/dr23s99lv4" target="_blank">Read News and answer questions related to it</a>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" id="task2" onclick="toggleTask(2)">
+            <a href="https://docs.google.com/spreadsheets/d/1IwmM6uSK15S0HBSmyIMgL8GT3XeUnkH1Aay9CYelRps/edit?usp=sharing" target="_blank">Memorize 10 vocab words</a>
+        </div>
+    </div>
+
+    <hr style="border: 0; border-top: 1px solid #eee;">
+
+    <div class="week-bar" id="week-bar">
+        <div class="day-box" id="day-0">Sun.</div>
+        <div class="day-box" id="day-1">Mon.</div>
+        <div class="day-box" id="day-2">Tue.</div>
+        <div class="day-box" id="day-3">Wed.</div>
+        <div class="day-box" id="day-4">Thu.</div>
+        <div class="day-box" id="day-5">Fri.</div>
+        <div class="day-box" id="day-6">Sat.</div>
+    </div>
+</div>
+
+<script>
+    let state = {
+        lastActiveDate: "", 
+        streak: 0,
+        tasks: [false, false, false],
+        weekHistory: [false, false, false, false, false, false, false]
+    };
+
+    function loadState() {
+        const saved = localStorage.getItem('dailyTrackerState');
+        if (saved) {
+            state = JSON.parse(saved);
+        }
+        checkDateTransition();
+    }
+
+    function saveState() {
+        localStorage.setItem('dailyTrackerState', JSON.stringify(state));
+    }
+
+    function getTodayString() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function checkDateTransition() {
+        const todayStr = getTodayString();
+        const today = new Date();
+        const currentDayOfWeek = today.getDay();
+
+        if (state.lastActiveDate !== todayStr) {
+            // Reset week layout on Sunday
+            if (currentDayOfWeek === 0 && state.lastActiveDate !== "") {
+                state.weekHistory = [false, false, false, false, false, false, false];
+            }
+
+            // If a day broke without being completely cleared, kill the streak
+            if (state.lastActiveDate !== "") {
+                const lastDate = new Date(state.lastActiveDate + "T00:00:00");
+                const lastDayOfWeek = lastDate.getDay();
+                
+                if (!state.weekHistory[lastDayOfWeek]) {
+                    state.streak = 0;
+                }
+            }
+
+            state.tasks = [false, false, false];
+            state.lastActiveDate = todayStr;
+            saveState();
+        }
+    }
+
+    function toggleTask(index) {
+        state.tasks[index] = !state.tasks[index];
+        
+        const allDone = state.tasks.every(t => t === true);
+        const todayIndex = new Date().getDay();
+
+        if (allDone && !state.weekHistory[todayIndex]) {
+            state.weekHistory[todayIndex] = true;
+            state.streak += 1;
+        } 
+        else if (!allDone && state.weekHistory[todayIndex]) {
+            state.weekHistory[todayIndex] = false;
+            state.streak = Math.max(0, state.streak - 1);
+        }
+
+        saveState();
+        render();
+    }
+
+    function render() {
+        const targetDate = new Date();
+        
+        // Render Date
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('current-date').innerText = targetDate.toLocaleDateString('en-US', options);
+
+        // Render Streak
+        const streakCountEl = document.getElementById('streak-count');
+        if (state.streak >= 1) {
+            streakCountEl.innerHTML = `${state.streak} <span style="color: #ff4500;">🔥</span>`;
+        } else {
+            streakCountEl.innerText = state.streak;
+        }
+
+        // Render Checklist UI
+        state.tasks.forEach((is_checked, index) => {
+            const checkbox = document.getElementById(`task${index}`);
+            const itemDiv = checkbox.closest('.task-item');
+            checkbox.checked = is_checked;
+            if (is_checked) {
+                itemDiv.classList.add('checked');
+            } else {
+                itemDiv.classList.remove('checked');
+            }
+        });
+
+        // Render Week Bar
+        state.weekHistory.forEach((isDayDone, index) => {
+            const dayBox = document.getElementById(`day-${index}`);
+            if (isDayDone) {
+                dayBox.classList.add('completed');
+            } else {
+                dayBox.classList.remove('completed');
+            }
+        });
+    }
+
+    loadState();
+    render();
+</script>
+
+</body>
+</html>
