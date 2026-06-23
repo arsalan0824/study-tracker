@@ -13,61 +13,65 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
+            background-color: white; /* Clean white background for the widget */
             color: var(--dark-text);
+            margin: 0;
+            padding: 10px;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            margin: 0;
+            height: 100vh;
+            box-sizing: border-box;
         }
 
+        /* Flattened container to perfectly match iPhone Medium Widget proportions */
         .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             width: 100%;
-            max-width: 450px;
-            text-align: center;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+
+        /* Compact header section */
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
         }
 
         h1 {
-            margin-bottom: 5px;
-            font-size: 1.8rem;
-        }
-
-        .date-display {
-            color: #666;
+            margin: 0;
             font-size: 1.1rem;
-            margin-bottom: 20px;
+            font-weight: 700;
         }
 
         .streak-display {
-            font-size: 1.5rem;
+            font-size: 1.1rem;
             font-weight: bold;
-            margin-bottom: 25px;
             display: flex;
-            justify-content: center;
             align-items: center;
-            gap: 5px;
+            gap: 3px;
         }
 
+        /* Checklist now uses smaller spacing to fit the widget height */
         .checklist {
-            text-align: left;
-            margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 5px;
         }
 
         .task-item {
             display: flex;
             align-items: center;
-            padding: 12px;
+            padding: 6px 10px;
             background-color: #f9f9f9;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            border-left: 4px solid var(--gray-undone);
-            transition: all 0.3s ease;
+            border-radius: 6px;
+            border-left: 3px solid var(--gray-undone);
+            transition: all 0.2s ease;
         }
 
         .task-item.checked {
@@ -76,39 +80,37 @@
         }
 
         .task-item input {
-            margin-right: 15px;
-            transform: scale(1.3);
+            margin-right: 10px;
+            transform: scale(1.1);
             cursor: pointer;
         }
 
         .task-item a {
-            font-size: 1.05rem;
+            font-size: 0.85rem;
             color: var(--dark-text);
             text-decoration: none;
             width: 100%;
             display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis; /* Prevents text from wrapping and breaking layout */
         }
 
-        .task-item a:hover {
-            color: #0056b3;
-            text-decoration: underline;
-        }
-
+        /* Compact horizontal week bar */
         .week-bar {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
-            margin-top: 20px;
+            gap: 4px;
         }
 
         .day-box {
             background-color: var(--gray-undone);
             color: #555;
-            padding: 10px 2px;
-            border-radius: 6px;
-            font-size: 0.85rem;
+            padding: 4px 0;
+            border-radius: 4px;
+            font-size: 0.75rem;
             font-weight: 600;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            text-align: center;
         }
 
         .day-box.completed {
@@ -120,11 +122,11 @@
 <body>
 
 <div class="container">
-    <h1 id="date-title">Today's Tracker</h1>
-    <div class="date-display" id="current-date">Loading date...</div>
-    
-    <div class="streak-display" id="streak-container">
-        Streak: <span id="streak-count">0</span>
+    <div class="header-section">
+        <h1 id="current-date">Loading...</h1>
+        <div class="streak-display" id="streak-container">
+            Streak: <span id="streak-count">0</span>
+        </div>
     </div>
 
     <div class="checklist">
@@ -134,15 +136,13 @@
         </div>
         <div class="task-item">
             <input type="checkbox" id="task1" onclick="toggleTask(1)">
-            <a href="https://dl.bookfunnel.com/dr23s99lv4" target="_blank">Read News and answer questions related to it</a>
+            <a href="https://dl.bookfunnel.com/dr23s99lv4" target="_blank">Read News & answer questions</a>
         </div>
         <div class="task-item">
             <input type="checkbox" id="task2" onclick="toggleTask(2)">
             <a href="https://docs.google.com/spreadsheets/d/1IwmM6uSK15S0HBSmyIMgL8GT3XeUnkH1Aay9CYelRps/edit?usp=sharing" target="_blank">Memorize 10 vocab words</a>
         </div>
     </div>
-
-    <hr style="border: 0; border-top: 1px solid #eee;">
 
     <div class="week-bar" id="week-bar">
         <div class="day-box" id="day-0">Sun.</div>
@@ -186,12 +186,10 @@
         const currentDayOfWeek = today.getDay();
 
         if (state.lastActiveDate !== todayStr) {
-            // Reset week layout on Sunday
             if (currentDayOfWeek === 0 && state.lastActiveDate !== "") {
                 state.weekHistory = [false, false, false, false, false, false, false];
             }
 
-            // If a day broke without being completely cleared, kill the streak
             if (state.lastActiveDate !== "") {
                 const lastDate = new Date(state.lastActiveDate + "T00:00:00");
                 const lastDayOfWeek = lastDate.getDay();
@@ -229,19 +227,17 @@
     function render() {
         const targetDate = new Date();
         
-        // Render Date
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        // Shorter date format to save space
+        const options = { weekday: 'short', month: 'short', day: 'numeric' };
         document.getElementById('current-date').innerText = targetDate.toLocaleDateString('en-US', options);
 
-        // Render Streak
         const streakCountEl = document.getElementById('streak-count');
         if (state.streak >= 1) {
-            streakCountEl.innerHTML = `${state.streak} <span style="color: #ff4500;">🔥</span>`;
+            streakCountEl.innerHTML = `${state.streak}<span style="color: #ff4500; font-size:1rem;">🔥</span>`;
         } else {
             streakCountEl.innerText = state.streak;
         }
 
-        // Render Checklist UI
         state.tasks.forEach((is_checked, index) => {
             const checkbox = document.getElementById(`task${index}`);
             const itemDiv = checkbox.closest('.task-item');
@@ -253,7 +249,6 @@
             }
         });
 
-        // Render Week Bar
         state.weekHistory.forEach((isDayDone, index) => {
             const dayBox = document.getElementById(`day-${index}`);
             if (isDayDone) {
